@@ -1,8 +1,4 @@
-const box = require('./boxChart')
-const bar = require('./barChart')
 const PdfPrinter = require('pdfmake')
-const fs = require('fs')
-
 
 const fonts = {
     Roboto: {
@@ -17,8 +13,7 @@ const dt = new Date()
 const date = dt.toLocaleString()
 const printer = new PdfPrinter(fonts)
 
-
-function makeSampleReport(data, resp) {
+function makeSampleReport(data) {
 
     const documentDefinition = {
         pageSize: 'A4',
@@ -214,8 +209,8 @@ function makeSampleReport(data, resp) {
                     alignment: 'center',
                     body: [
                         [{text: ' Показатель', style: 'tableHeader'}, {text: 'Значение', alignment: 'center',style: 'tableHeader'}],
-                        [{text: ' Прочтения по локусу HLA-B'}, {text: data.err_hlab, alignment: 'center'}],
-                        [{text: ' Прочтения по локусу HLA-C'}, {text: data.err_hlac, alignment: 'center'}],
+                        [{text: ' Прочтения по локусу HLA-B'}, {text: data.err_hla_b, alignment: 'center'}],
+                        [{text: ' Прочтения по локусу HLA-C'}, {text: data.err_hla_c, alignment: 'center'}],
                         [{text: ' Контаминация'}, {text: data.kont, alignment: 'center'}],
                         [{text: ' Размер вставки'}, {text: data.ins_size, alignment: 'center'}],
                         [{text: ' Число прочтений'}, {text: data.readCount, alignment: 'center'}]
@@ -264,7 +259,7 @@ function makeSampleReport(data, resp) {
                     }
                 }
             },
-            {text: '\n'},  {text: '\n'},  {text: '\n'},  {text: '\n'},{text: '\n'},
+            {text: '\n'},{text: '\n'},{text: '\n'},{text: '\n'},{text: '\n'},
             {text: '\n'},{text: '\n'},{text: '\n'},{text: '\n'},{text: '\n'},
             {text: '\n'},{text: '\n'},{text: '\n'},{text: '\n'},{text: '\n'},
             {
@@ -302,14 +297,10 @@ function makeSampleReport(data, resp) {
         },
         defaultStyle: {}
     }
-    resp.set('content-type', 'application/pdf')
-    const pdfDoc = printer.createPdfKitDocument(documentDefinition)
-   pdfDoc.pipe(fs.createWriteStream('../docs/sampleReport.pdf'))
-   pdfDoc.pipe(resp)
-    pdfDoc.end();
+    return printer.createPdfKitDocument(documentDefinition)
+
 }
 
-
 module.exports = {
-    makeSampleReport: makeSampleReport
+    makeSampleReport
 }

@@ -1,167 +1,180 @@
 const fs = require('fs')
 const D3Node = require('d3-node')
 const d3 = require('d3')
-const axis = require('d3-axis')
-const scale = require('d3-scale')
+const boxPlotData = require('./boxChart')
+
+let boxPlotdata = [10, 15, 30, 45, 5, 20, 32, 8, 12]
+let boxPlotdata1 = [15, 15, 35, 47, 10, 27, 37, 9, 13]
+let boxPlotdata2 = [16, 15, 30, 45, 9, 24, 32, 8, 15]
+let boxPlotdata3 = [11, 15, 31, 45, 5, 20, 32, 8, 17]
+let boxPlotdata4 = [13, 15, 33, 46, 8, 21, 33, 9, 18]
 
 let data = [{
-    "count": "1000",
-    "min": "1.6",
-    "max": "4.1",
-    "label": "A",
-    "stddev": "0.72",
-    "mean": "3.1"
-}, {
-    "count": "2000",
-    "min": "1.1",
-    "max": "2.9",
-    "label": "B",
-    "stddev": "0.72",
-    "mean": "2.2"
-}, {
-    "count": "3000",
-    "min": "2.4",
-    "max": "3.6",
-    "label": "C",
-    "stddev": "0.72",
-    "mean": "3.1"
-},
-    {
-        "count": "4000",
-        "min": "2.4",
-        "max": "3.6",
-        "label": "DBQ1",
-        "stddev": "0.72",
-        "mean": "3.1"
+        key: "A",
+        value: boxPlotData.calculateBoxPlotData(boxPlotdata)
     },
     {
-        "count": "5000",
-        "min": "2.4",
-        "max": "5.6",
-        "label": "DRB1",
-        "stddev": "0.72",
-        "mean": "3.1"
+        key: "B",
+        value:  boxPlotData.calculateBoxPlotData(boxPlotdata1)
+    },
+    {
+        key: "C",
+        value:  boxPlotData.calculateBoxPlotData(boxPlotdata2)
+    },
+    {
+        key: "DBQ1",
+        value:  boxPlotData.calculateBoxPlotData(boxPlotdata3)
+    },
+    {
+        key: "DRB1",
+        value:  boxPlotData.calculateBoxPlotData(boxPlotdata4)
     }
-];
+]
+function buildGroupBoxChart(data) {
 
-function buildGroupBoxChart() {
     const d3n = new D3Node()
 
-    let margin = {top: 10, right: 30, bottom: 30, left: 40};
-    let width = 550 - margin.left - margin.right;
-    let height = 400 - margin.top - margin.bottom;
+    // sizes for svg
+    let margin = {top: 10, right: 30, bottom: 30, left: 40}
+    let width = 850 - margin.left - margin.right
+    let height = 500 - margin.top - margin.bottom
 
-    const svg = d3n.createSVG(width, height);
+    const svg = d3n.createSVG(width, height)
 
-    let data_sorted = data.sort(d3.ascending);
-    let q1 = d3.quantile(data_sorted, .25);
-    let median = d3.quantile(data_sorted, .5);
-    let q3 = d3.quantile(data_sorted, .75);
-    let interQuantileRange = q3 - q1;
-    let min = q1 - 1.5 * interQuantileRange;
-    let max = q1 + 1.5 * interQuantileRange;
-
-    let w = 500,
-        h = 300,
-        padding = 30,
-        padding2 = 20;
-
-    svg.append("svg")
-        .attr("width", w)
-        .attr("height", h);
+    // sizes for plots
+    let plotWidth = 500,
+        plotHeigth = 300,
+        xPadding = 30,
+        yPadding = 20;
 
     let yScale = d3.scaleLinear()
-        .domain([0, 10])
-        .range([h - padding2, 10])
+        .domain([0, 50]) // сюда передать значение max + offset
+        .range([plotHeigth - yPadding, 10])
 
     let xScale = d3.scaleBand()
         .domain(data.map(function (d) {
-            return d.label
-        }))
-        .range([padding, w - padding])
-        .padding(0.4);
+           return d.key
+       }))
+        .range([30, plotWidth - xPadding])
+         .padding(0.4)
 
-    let xAxis = d3.axisBottom(xScale);
-    let yAxis = d3.axisLeft(yScale);
-
-    svg.append("g")
-        .attr("transform", "translate(0," + (h - padding2) + ")")
-        .attr("stroke", "black")
-        .call(xAxis);
+    let xAxis = d3.axisBottom(xScale)
+    let yAxis = d3.axisLeft(yScale)
 
     svg.append("g")
-        .attr("transform", "translate(" + padding + ",0)")
+        .attr("transform", "translate(" + xPadding + ",0)")
         .attr("stroke", "black")
-        .call(yAxis.ticks(5));
+        .call(yAxis.ticks(5))
+
     svg.append("g")
         .style("color", "rgb(204, 204, 204)")
-        .call(yAxis.ticks(5).tickSizeInner(-width).tickFormat(() => ""))
+        .attr("transform", "translate(" + xPadding + ",0)")
+        .call(yAxis.ticks(5).tickSizeInner(-width+ 340).tickFormat(() => ""))
         .select(".domain").remove()
 
-    svg.selectAll("vertLines") //mustaches
+    svg.append("g")
+        .attr("transform", "translate(0," + (plotHeigth - yPadding) + ")")
+        .attr("stroke", "black")
+        .call(xAxis.ticks(5));
+    let boxWidth = 50
+
+    svg  .selectAll("vertLines")      //mustaches
         .data(data)
         .enter()
         .append("line")
-        .attr("stroke", "black")
-        .attr("stroke-width", 1)
         .attr("x1", function (d) {
-            return xScale(d.label) + 25
+            return xScale(d.key) + 25
         })
         .attr("x2", function (d) {
-            return xScale(d.label) + 25
+            return xScale(d.key) + 25
         })
-        .attr("y1", function (d) {
-            return yScale(d.min)+ 20
+        .attr("y1",function (d) {
+            return yScale(d.value.min)
         })
         .attr("y2",function (d) {
-            return yScale(d.max)
+            return yScale(d.value.max)
         })
+        .attr("stroke", "black")
 
-
-    svg.selectAll("foo") //boxes
+    svg .selectAll("boxes")//boxes
         .data(data)
         .enter()
         .append("rect")
-        .attr("fill", "#69b3a2")
-        .attr("stroke", "black")
         .attr("x", function (d) {
-            return xScale(d.label)
+            return xScale(d.key)
         })
-        .attr("width", xScale.bandwidth())
-        .attr("y", function (d) {
-            return yScale(d.max)
+        .attr("y",  function (d) {
+            return yScale(d.value.q3)
         })
+        .attr("width", boxWidth)
         .attr("height", function (d) {
-            return yScale(d.min) - yScale(d.max)
-        });
+            return yScale(d.value.q1)- yScale(d.value.q3)
+        })
+        .attr("fill", "#BDBDBD")
+        .attr("stroke", "black")
 
-    svg.selectAll("foo") // horizontal line
+
+    svg
+        .selectAll("medianLines")// horizontal line
         .data(data)
         .enter()
         .append("line")
-        .attr("stroke", "black")
-        .attr("stroke-width", 1)
         .attr("x1", function (d) {
-            return xScale(d.label)
-        })
+            return xScale(d.key)})
         .attr("x2", function (d) {
-            return xScale(d.label) + xScale.bandwidth()
-        })
+            return xScale(d.key) + 50})
         .attr("y1", function (d) {
-            return yScale(d.mean)
+            return yScale(d.value.median)
         })
         .attr("y2", function (d) {
-            return yScale(d.mean)
-       });
+            return yScale(d.value.median)
+        })
+        .attr("stroke", "black")
+        .attr("width", 80)
+
+    svg
+        .selectAll("medianLines")// horizontal line
+        .data(data)
+        .enter()
+        .append("line")
+        .attr("x1", function (d) {
+            return xScale(d.key)})
+        .attr("x2", function (d) {
+            return xScale(d.key) + 50})
+        .attr("y1", function (d) {
+            return yScale(d.value.max)
+        })
+        .attr("y2", function (d) {
+            return yScale(d.value.max)
+        })
+        .attr("stroke", "black")
+        .attr("width", 80)
+
+    svg
+        .selectAll("medianLines")// horizontal line
+        .data(data)
+        .enter()
+        .append("line")
+        .attr("x1", function (d) {
+            return xScale(d.key)})
+        .attr("x2", function (d) {
+            return xScale(d.key) + 50})
+        .attr("y1", function (d) {
+            return yScale(d.value.min)
+        })
+        .attr("y2", function (d) {
+            return yScale(d.value.min)
+        })
+        .attr("stroke", "black")
+        .attr("width", 80)
 
 
-
-
-    fs.writeFileSync('out2.svg', d3n.svgString());
+    fs.writeFileSync('out1.svg', d3n.svgString());
     return d3n.svgString();
 }
-//)}
-buildGroupBoxChart()
+
+buildGroupBoxChart(data)
+
 module.exports = {
     buildGroupBoxChart
 }

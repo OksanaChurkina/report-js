@@ -16,8 +16,7 @@ const dt = new Date()
 const date = dt.toLocaleString()
 const printer = new PdfPrinter(fonts)
 
-
-function makeRunReport(data, resp) {
+function makeRunReport(data, boxData) {
 
     const documentDefinition = {
         pageSize: 'A4',
@@ -52,20 +51,39 @@ function makeRunReport(data, resp) {
                 },
             };
         },
-        footer: {
-            margin: [50, 0, 50, 0],
-            table: {
-                widths: ["*"],
-                body: [
-                    [{
-                        text: 'ТУ 21.20.23-007-39429653-2020',
-                        fontSize: 10,
-                        alignment: 'center'
-                    }
-                    ],
-                ]
-            }
-        },
+        footer: function(currentPage, pageCount) {
+            if (currentPage == pageCount)
+                return {
+            {
+                table: {
+                    widths: [100, '*'],
+                        body:[
+                       [ [{text: '', border: [false, true, false, false]}], [{text: '', border: [false, false, false, false]}]],
+                        []
+                    ]
+                }
+            },
+            {text: '1 Формат записи: \'Аллель 1 + Аллель 2\', где ND (not determined) - аллель не установлена' +
+            ' - обозначает случай определения гомозиготы, когда не исключено выпадение второй аллели', italics: true, fontSize: 9}
+
+
+        }
+            },
+        // footer: {
+        //     margin: [50, 0, 50, 0],
+        //
+        //     table: {
+        //         widths: ["*"],
+        //         body: [
+        //             [{
+        //                 text: 'ТУ 21.20.23-007-39429653-2020',
+        //                 fontSize: 10,
+        //                 alignment: 'center'
+        //             }
+        //             ],
+        //         ]
+        //     }
+        // },
         content: [
             {
                 style: 'tableExample',
@@ -98,9 +116,11 @@ function makeRunReport(data, resp) {
                             text: 'Тест-система',
                             border: [false, false, true, true],
                             fillColor: '#CCCCCC'
-                        }, {text: 'VariFind HLA solution IL-v2',
+                        }, {
+                            text: 'VariFind HLA solution IL-v2',
                             border: [false, false, false, true],
-                            fillColor: '#CCCCCC'}],
+                            fillColor: '#CCCCCC'
+                        }],
                         [{text: 'Лот', border: [false, false, true, true]}, {
                             text: data.lotType,
                             border: [false, false, false, true]
@@ -158,7 +178,7 @@ function makeRunReport(data, resp) {
                             border: [false, false, false, true]
                         }],
                         [{text: 'Версия IMGT-HLA', border: [false, false, true, true]}, {
-                            text: data. imgtHlaVersion,
+                            text: data.imgtHlaVersion,
                             border: [false, false, false, true]
                         }],
                         [{text: 'Алгоритм', border: [false, false, true, true]}, {
@@ -175,28 +195,36 @@ function makeRunReport(data, resp) {
             {text: 'КОНТРОЛЬ КАЧЕСТВА', style: 'subheader', alignment: 'left', pageBreak: "before"},
             {
                 table: {
-                    widths: ['*', '*'],
+                    widths: ['*', '*', '*'],
                     alignment: 'center',
-                    body: [
-                        [{text: 'Ср. количество прочтений',  border: [false, false, false, false]}, {text: 'Размер вставки',  border: [false, false, false, false]}],
-                        [{svg: box.buildBoxChart(),  border: [false, false, false, false]}, {svg: box.buildBoxChart(),  border: [false, false, false, false]}],
-                    ]
-                }
-                },
-            {text: '\n'},
-            {
-                table: {
-                    widths: ['*', '*'],
-                    alignment: 'center',
-                    body: [
-                        [{text: 'Всего прочтений',  border: [false, false, false, false]}, { text: '', border: [false, false, false, false]}],
-                        [{svg: box.buildBoxChart(),  border: [false, false, false, false]}, { text: '', border: [false, false, false, false]}],
+                    body: [[
+                            {
+                                text: 'Ср. количество прочтений',
+                                border: [false, false, false, false]
+                            },
+                            {
+                                text: 'Размер вставки',
+                                border: [false, false, false, false]
+                            }, {text: 'Всего прочтений', border: [false, false, false, false]}
+                            ],
+                            [
+                            {
+                                svg: box.buildBoxChart(),
+                                border: [false, false, false, false]
+                            },
+                            {
+                                svg: box.buildBoxChart(),
+                                border: [false, false, false, false]
+                            },
+                            {svg: box.buildBoxChart(),
+                                border: [false, false, false, false]
+                            }
+                            ],
                     ]
                 }
             },
-            {text: '\n'},
-            {text: 'Прочтения по локусам', alignment: 'center', pageBreak: "before"},
-            {svg: groupBox.buildGroupBoxChart()},
+            {text: 'Прочтения по локусам', alignment: 'center'},
+            {svg: groupBox.buildGroupBoxChart(boxData)},
             {text: '\n'},
             {text: 'СТАТУСЫ ОБРАЗЦОВ В ЗАПУСКЕ', style: 'subheader', alignment: 'left'},
             {
@@ -205,7 +233,11 @@ function makeRunReport(data, resp) {
                     alignment: 'center',
                     headerRows: 1,
                     body: [
-                        [{text: ' Статус', style: 'tableHeader'}, {text: 'Количество образцов', alignment: 'center',style: 'tableHeader'}],
+                        [{text: ' Статус', style: 'tableHeader'}, {
+                            text: 'Количество образцов',
+                            alignment: 'center',
+                            style: 'tableHeader'
+                        }],
                         [{text: ' Всего импортировано'}, {text: data.allSamples, alignment: 'center'}],
                         [{text: ' Утверждено'}, {text: data.okSamples, alignment: 'center'}],
                         [{text: ' Одобрено'}, {text: data.approvedSamples, alignment: 'center'}],
@@ -224,7 +256,7 @@ function makeRunReport(data, resp) {
                 text: 'ОШИБКИ АНАЛИЗА',
                 style: 'subheader',
                 alignment: 'left',
-                fontSize: 14
+                fontSize: 14,
             },
             {text: '\n'},
             {
@@ -232,11 +264,15 @@ function makeRunReport(data, resp) {
                     widths: ['*', '*'],
                     alignment: 'center',
                     body: [
-                        [{text: 'Образец', style: 'tableHeader'},{text: 'Показатель', alignment: 'center', style: 'tableHeader'}],
+                        [{text: 'Образец', style: 'tableHeader'}, {
+                            text: 'Показатель',
+                            alignment: 'center',
+                            style: 'tableHeader'
+                        }],
                         [{text: data.sample}, {text: 'Контаминация', alignment: 'center'}],
                         [{text: data.sample}, {text: 'Прочтения по локусу HLA-C', alignment: 'center'}],
                         [{text: data.sample}, {text: 'Прочтения по локусу HLA-B', alignment: 'center'}],
-                        [{text: data.sample}, {text:  'Размер вставки', alignment: 'center'}],
+                        [{text: data.sample}, {text: 'Размер вставки', alignment: 'center'}],
                         [{text: data.sample}, {text: 'Число прочтений', alignment: 'center'}]
                     ]
                 },
@@ -256,18 +292,18 @@ function makeRunReport(data, resp) {
             {text: '\n'},
             {
                 table: {
-                    widths: [40, 40, '*', 50, 50, '*', '*'],
+                    widths: [40, 35, '*', 40, 35, '*', '*'],
                     alignment: 'center',
                     headerRows: 1,
                     body: [
                         [
-                            {text: 'Образец', alignment: 'center', bold: true, fontSize: 11},
-                            {text: 'Локус', alignment: 'center', bold: true, fontSize: 11},
-                            {text: 'Ближайшая аллель', alignment: 'center', bold: true, fontSize: 11},
-                            {text: 'Разрешение', alignment: 'center', bold: true, fontSize: 11},
-                            {text: 'Экзон', alignment: 'center', bold: true, fontSize: 11},
-                            {text: 'Нуклеотидная замена', alignment: 'center', bold: true, fontSize: 11},
-                            {text: 'Аминокислотная замена', alignment: 'center', bold: true, fontSize: 11}
+                            {text: 'Образец', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'Локус', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'Ближайшая аллель', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'Разрешение', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'Экзон', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'Нуклеотидная замена', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'Аминокислотная замена', alignment: 'center', bold: true, fontSize: 10}
                         ],
                         [
                             {text: data.sample, alignment: 'center'},
@@ -277,6 +313,56 @@ function makeRunReport(data, resp) {
                             {text: data.ekzon, alignment: 'center'},
                             {text: data.nukleoReplacement, alignment: 'center'},
                             {text: data.aminoReplacement, alignment: 'center'}
+                        ]
+                    ]
+                },
+                layout: {
+                    fillColor: function (rowIndex, node, columnIndex) {
+                        return (rowIndex % 2 === 0) ? '#CCCCCC' : null;
+                    }
+                }
+            },
+            {
+                text: 'РЕЗУЛЬТАТ ГЕНОТИПИРОВАНИЯ',
+                style: 'subheader',
+                alignment: 'left',
+                fontSize: 14,
+                pageBreak: "before"
+            },
+            {text: '\n'},
+            {
+                table: {
+                    widths: [20, 50, '*', '*', '*', 60, 60],
+
+                    alignment: 'center',
+                    headerRows: 1,
+                    body: [
+                        [
+                            {text: '№', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'Образец', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'HLA-A', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'HLA-B', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'HLA-C', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'HLA-DQB1', alignment: 'center', bold: true, fontSize: 10},
+                            {text: 'HLA-DRB1', alignment: 'center', bold: true, fontSize: 10}
+                        ],
+                        [
+                            {text: '1', alignment: 'center', fontSize: 10},
+                            {text: data.sample, alignment: 'center', fontSize: 10},
+                            {text: data.hla_a, alignment: 'center', fontSize: 10},
+                            {text: data.hla_b, alignment: 'center', fontSize: 10},
+                            {text: data.hla_c, alignment: 'center', fontSize: 10},
+                            {text: data.dqb1, alignment: 'center', fontSize: 10},
+                            {text: data.drb1, alignment: 'center', fontSize: 10}
+                        ],
+                        [
+                            {text: '2', alignment: 'center', fontSize: 10},
+                            {text: data.sample, alignment: 'center', fontSize: 10},
+                            {text: 'Контаминация', alignment: 'center', fontSize: 10},
+                            {text: 'Контаминация', alignment: 'center', fontSize: 10},
+                            {text: 'Контаминация', alignment: 'center', fontSize: 10},
+                            {text: 'Контаминация', alignment: 'center', fontSize: 10},
+                            {text: 'Контаминация', alignment: 'center', fontSize: 10}
                         ]
                     ]
                 },
@@ -312,13 +398,14 @@ function makeRunReport(data, resp) {
         },
         defaultStyle: {}
     }
-    resp.set('content-type', 'application/pdf')
+
+   // return printer.createPdfKitDocument(documentDefinition)
     const pdfDoc = printer.createPdfKitDocument(documentDefinition)
-    pdfDoc.pipe(fs.createWriteStream('../docs/runReport.pdf'));
-    pdfDoc.pipe(resp)
+    pdfDoc.pipe(fs.createWriteStream('runReport.pdf'));
     pdfDoc.end();
+
 }
 
 module.exports = {
-    makeRunReport: makeRunReport
+    makeRunReport
 }
